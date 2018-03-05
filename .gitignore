@@ -1,2 +1,6 @@
 /vendor/
 /var/*
+.buildpath
+.project
+.settings/
+.web-server-pid

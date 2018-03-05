@@ -1,12 +1,17 @@
 <?php
 
 use Interop\Container\ContainerInterface;
-use MeetupOrganizing\Command\ScheduleMeetupConsoleHandler;
-use MeetupOrganizing\Controller\MeetupDetailsController;
-use MeetupOrganizing\Entity\MeetupRepository;
-use MeetupOrganizing\Controller\ListMeetupsController;
-use MeetupOrganizing\Controller\ScheduleMeetupController;
-use MeetupOrganizing\Resources\Views\TwigTemplates;
+use Meetup\Application\Notify;
+use Meetup\Application\ScheduleMeetupHandler;
+use Meetup\Domain\Model\MeetupRepository;
+use Meetup\Infrastructure\Notifications\Log\LogNotifications;
+use Meetup\Infrastructure\Notifications\NotifyMany;
+use Meetup\Infrastructure\Notifications\RabbitMQ\PublishNotificationsToRabbitMQ;
+use Meetup\Infrastructure\UserInterface\Web\Controller\MeetupDetailsController;
+use Meetup\Infrastructure\Persistence\Filesystem\FileBasedMeetupRepository;
+use Meetup\Infrastructure\UserInterface\Web\Controller\ListMeetupsController;
+use Meetup\Infrastructure\UserInterface\Web\Controller\ScheduleMeetupController;
+use Meetup\Infrastructure\UserInterface\Web\Resources\Views\TwigTemplates;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Debug\Debug;
@@ -87,10 +92,30 @@ $container[UrlHelper::class] = function (ContainerInterface $container) {
 };
 
 /*
+ * Notifications
+ */
+$container[Notify::class] = function () {
+    return new NotifyMany([
+        new LogNotifications(),
+        new PublishNotificationsToRabbitMQ()
+    ]);
+};
+
+/*
  * Persistence
  */
 $container[MeetupRepository::class] = function () {
-    return new MeetupRepository(__DIR__ . '/../var/meetups.txt');
+    return new FileBasedMeetupRepository(__DIR__ . '/../var/meetups.txt');
+};
+
+/*
+ * Use cases
+ */
+$container[ScheduleMeetupHandler::class] = function(ContainerInterface $container) {
+    return new ScheduleMeetupHandler(
+        $container[MeetupRepository::class],
+        $container[Notify::class]
+    );
 };
 
 /*
@@ -100,6 +125,7 @@ $container[ScheduleMeetupController::class] = function (ContainerInterface $cont
     return new ScheduleMeetupController(
         $container->get(TemplateRendererInterface::class),
         $container->get(RouterInterface::class),
+        $container->get(ScheduleMeetupHandler::class),
         $container->get(MeetupRepository::class)
     );
 };
@@ -119,8 +145,9 @@ $container[MeetupDetailsController::class] = function (ContainerInterface $conta
 /*
  * CLI
  */
-$container[ScheduleMeetupConsoleHandler::class] = function (ContainerInterface $container) {
-    return new ScheduleMeetupConsoleHandler(
+$container[\Meetup\Infrastructure\UserInterface\Cli\ScheduleMeetupConsoleHandler::class] = function (ContainerInterface $container) {
+    return new \Meetup\Infrastructure\UserInterface\Cli\ScheduleMeetupConsoleHandler(
+        $container->get(ScheduleMeetupHandler::class),
         $container->get(MeetupRepository::class)
     );
 };

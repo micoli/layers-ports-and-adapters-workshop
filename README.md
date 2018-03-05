@@ -1,5 +1,7 @@
 # Code and assignments for the "Layers, Ports & Adapters" workshop module
 
+from https://github.com/matthiasnoback/layers-ports-and-adapters-workshop
+
 ## Requirements
 
 - [Docker Engine](https://docs.docker.com/engine/installation/)

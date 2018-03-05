@@ -1,0 +1,4 @@
+twig:
+    paths: ['%kernel.project_dir%/templates','%kernel.project_dir%/src/Meetup/Infrastructure/UserInterface/Web/Resources/Views']
+    debug: '%kernel.debug%'
+    strict_variables: '%kernel.debug%'

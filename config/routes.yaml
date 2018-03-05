@@ -1,0 +1,9 @@
+list_meetups:
+    path: /
+    controller: Meetup\Infrastructure\UserInterface\Web\Controller\ListMeetupsController::index
+meetup_details:
+    path: /meetup/{id}
+    controller: Meetup\Infrastructure\UserInterface\Web\Controller\MeetupDetailsController::index
+schedule_meetup:
+    path: schedule-meetup
+    controller: Meetup\Infrastructure\UserInterface\Web\Controller\ScheduleMeetupController::index
